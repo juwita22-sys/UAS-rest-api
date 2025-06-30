@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Data Mahasiswa Indonesia</title>
+  <style>
+    body {
+      background: linear-gradient(to right, #6dd5fa, #2980b9);
+      color: #333;
+      font-family: "Segoe UI", "Roboto", "Arial", sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 900px;
+      margin: auto;
+      padding: 20px;
+      background-color: rgb(255, 255, 255);
+      box-shadow: 0 0 15px rgba(0,0,0,0.2);
+      border-radius: 10px;
+      margin-top: 30px;
+    }
+    h1, h2 {
+      text-align: center;
+      color: #2c3e50;
+    }
+    form {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    input {
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 16px;
+      flex: 1;
+      min-width: 150px;
+    }
+    button {
+      padding: 10px 15px;
+      border: none;
+      border-radius: 8px;
+      background-color: #3498db;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background-color: #2980b9;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    th {
+      background-color: #ecf0f1;
+    }
+    td button {
+      margin-right: 5px;
+      font-size: 14px;
+      padding: 5px 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>Data Mahasiswa Indonesia</h1>
+
+    <form id="dosenForm">
+      <input type="text" id="nama" placeholder="Nama" required>
+      <input type="text" id="univ" placeholder="Universitas" required>
+      <input type="text" id="jurusan" placeholder="Jurusan" required>
+      <button type="submit">Tambah Dosen</button>
+    </form>
+
+    <h2>Daftar Mahasiswa</h2>
+    <table id="tableDosen">
+      <thead>
+        <tr>
+          <th>NO</th>
+          <th>Nama</th>
+          <th>Universitas</th>
+          <th>Jurusan</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody id="listDosen"></tbody>
+    </table>
+  </div>
+
+  <script>
+    function loadDosen() {
+      fetch('/dosen')
+        .then(response => response.json())
+        .then(data => {
+          const tbody = document.getElementById('listDosen');
+          tbody.innerHTML = '';
+          data.forEach((d, index) => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+              <td>${index + 1}</td>
+              <td>${d.nama}</td>
+              <td>${d.univ}</td>
+              <td>${d.jurusan}</td>
+              <td>
+                <button onclick="hapusDosen(${d.dosen_id})" style="background-color: #e74c3c;">Hapus</button>
+                <button onclick="editDosen(${d.dosen_id}, '${d.nama}', '${d.univ}', '${d.jurusan}')" style="background-color: #f39c12;">Edit</button>
+              </td>
+            `;
+            tbody.appendChild(row);
+          });
+        });
+    }
+
+    document.getElementById('dosenForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const nama = document.getElementById('nama').value;
+      const univ = document.getElementById('univ').value;
+      const jurusan = document.getElementById('jurusan').value;
+
+      fetch('/dosen', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ nama, univ, jurusan })
+      })
+      .then(response => response.json())
+      .then(result => {
+        alert(result.message || 'Data berhasil ditambahkan');
+        loadDosen();
+        document.getElementById('dosenForm').reset();
+      });
+    });
+
+    function hapusDosen(id) {
+      fetch(`/deletedosen?id=${id}`, {
+        method: 'DELETE'
+      })
+      .then(response => response.json())
+      .then(result => {
+        alert(result.message || 'Data berhasil dihapus');
+        loadDosen();
+      });
+    }
+
+    function editDosen(id, nama, univ, jurusan) {
+      const newNama = prompt("Nama baru:", nama);
+      const newUniv = prompt("Universitas baru:", univ);
+      const newJurusan = prompt("Jurusan baru:", jurusan);
+
+      if (newNama && newUniv && newJurusan) {
+        fetch(`/editdosen?id=${id}`, {
+          method: 'PUT',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            nama: newNama,
+            univ: newUniv,
+            jurusan: newJurusan
+          })
+        })
+        .then(response => response.json())
+        .then(result => {
+          alert(result.message || 'Data berhasil diubah');
+          loadDosen();
+        });
+      }
+    }
+
+    loadDosen();
+  </script>
+
+</body>
+</html>
